@@ -1,0 +1,32 @@
+{% extends 'student/studentbase.html' %}
+{% block content %}
+{%load static%}
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    
+</head>
+  
+
+<div class="jumbotron my-4">
+  
+  <form class="form" autocomplete="off" onsubmit=""  action="" method="POST">
+    {% csrf_token %}
+    <h2 style="text-align: center;">{{coding_course.course_name}}</h2><br>
+    {% for q in questions %}
+    <h3 class="text-danger">Question {{ forloop.counter }}: {{q.coding_question}}</h3>
+    <h4 style="text-align: right;">[{{q.coding_marks}} Marks]</h4>
+    <h3 class="text-danger">Expected Output :{{q.coding_answer}}</h3>
+    
+    
+    <a href="{% url 'start-coding-exam' coding_course.id  %}" class="btn btn-success" style="border-radius:0px;">Enter Examination</a><hr>
+    
+  </form><br>
+    {% endfor %}
+<div>
+
+<br><br><br><br><br><br>
+{% endblock content %}

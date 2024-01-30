@@ -1,0 +1,318 @@
+{% block content %}
+{% load static %}
+
+<head>
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+    crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+  <style>
+    h2,.Timer{
+            font-size:large;
+            margin:4 auto;
+            color: rgb(7, 26, 43);  
+              }
+        #videoCaptureBox {
+            background-color: #3e4043;
+            margin:0 auto;
+            position: relative;
+            width:95%;
+            left:0px;
+
+ 
+        }
+
+  </style>
+</head>
+
+<script type="text/javascript">
+  function captureVideo () {
+        var video = document.createElement('video');
+        video.autoplay = true;
+
+        video.style.width = '30%';
+        video.style.height = '250px';
+        video.style.backgroundColor='black';
+        video.style.border = '2px solid #dc3545';
+        video.style.display = 'block';
+        video.style.margin = '0 auto';
+
+        video.style.left = '150px';
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+
+                var videoCaptureBox = document.getElementById('videoCaptureBox');
+                videoCaptureBox.innerHTML = '';
+                videoCaptureBox.appendChild(video);
+
+                var imageCaptured = false;
+
+                var errorCount = 0;
+
+                setTimeout(function () {
+                    if (!imageCaptured)
+                    {
+                        captureImageFromVideo(video);
+                        imageCaptured = true;
+                    }
+                }, 1000);
+
+                setInterval(function () {
+                    if (imageCaptured)
+                    {
+                        compareImages();
+                    }
+                }, 2000); 
+
+                function compareImages () {
+                    var savedImageDataURL = localStorage.getItem('capturedImage');
+
+                    if (savedImageDataURL)
+                    {
+                        var savedImage = document.createElement('img');
+                        savedImage.src = savedImageDataURL;
+
+                        var videoCanvas = document.createElement('canvas');
+                        videoCanvas.width = video.videoWidth;
+                        videoCanvas.height = video.videoHeight;
+
+                        var savedCanvas = document.createElement('canvas');
+                        savedCanvas.width = savedImage.width;
+                        savedCanvas.height = savedImage.height;
+
+                        var videoContext = videoCanvas.getContext('2d');
+                        var savedContext = savedCanvas.getContext('2d');
+
+                        videoContext.drawImage(video, 0, 0);
+                        savedContext.drawImage(savedImage, 0, 0);
+
+                        var videoData = videoContext.getImageData(0, 0, videoCanvas.width, videoCanvas.height).data;
+                        var savedData = savedContext.getImageData(0, 0, savedCanvas.width, savedCanvas.height).data;
+
+                        var pixelsDifferent = 0;
+
+                        for (var i = 0; i < videoData.length; i += 4)
+                        {
+                            if (
+                                videoData[i] !== savedData[i] ||
+                                videoData[i + 1] !== savedData[i + 1] ||
+                                videoData[i + 2] !== savedData[i + 2] ||
+                                videoData[i + 3] !== savedData[i + 3]
+                            )
+                            {
+                                pixelsDifferent++;
+                            }
+                        }
+
+                        var threshold = 100;
+
+                        if (pixelsDifferent <= threshold)
+                        {
+                            console.log('Anonymous object detected.');
+                            errorCount++;
+                            if (errorCount >= 5)
+                            {
+                                window.location.href = 'home.html';
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(function (error) {
+                console.log('Error accessing camera:', error);
+            });
+
+        function captureImageFromVideo (videoElement) {
+            var canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+
+            var context = canvas.getContext('2d');
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+            var imageDataURL = canvas.toDataURL('image/png');
+
+            saveImage(imageDataURL);
+
+            
+        }
+
+        function saveImage (imageDataURL) 
+        {
+            localStorage.setItem('capturedImage', imageDataURL);
+        }
+    }
+
+
+    window.addEventListener('load', captureVideo);
+  function countdown(elem, duration) {
+    var totalSeconds = duration * 60;
+    var element = document.getElementById(elem);
+
+    var timer = setInterval(function () {
+      if (totalSeconds < 0) {
+        clearInterval(timer);
+        element.innerHTML = '<h2>Countdown complete!</h2>';
+        element.innerHTML += '<a href="#">Click here now</a>';
+        alert("Dear Student, your time is up! Please click the 'OK' button to submit your answers.");
+        window.location.href = "{% url 'calculate-coding-marks' %}";
+      } else {
+        var remainingMinutes = Math.floor(totalSeconds / 60);
+        var remainingSeconds = totalSeconds % 60;
+        element.innerHTML = remainingMinutes + ":" + remainingSeconds.toString().padStart(2, "0");
+        totalSeconds--;
+      }
+    }, 1000);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var duration = {{ coding_course.duration }};  
+    countdown("timer", duration);
+  });
+var examInProgress = true;
+
+window.addEventListener('beforeunload', function(event) {
+  if (examInProgress) 
+  {
+    var confirmationMessage = 'Are you sure you want to leave the exam?';
+
+    (event || window.event).returnValue = confirmationMessage;
+    return confirmationMessage;
+  }
+});
+
+document.addEventListener('visibilitychange', function(event) 
+{
+    if (examInProgress) 
+    {
+        document.addEventListener('visibilitychange', function(event)
+          {
+            if (examInProgress)
+            {
+              if (document.visibilityState === 'hidden')
+              {
+                 alert('You are not allowed to switch tabs during the exam.');
+                  window.focus();
+      
+                window.location.href = '/';
+              }
+            }
+        });
+
+      }
+  });
+</script>
+<div id="videoCaptureBox"></div>
+  <h2 style="text-align:center;" >{{ coding_course.course_name }}</h2>
+  <div id="timer" style="text-align: center;">{{ coding_course.duration }}</div>
+<div class="jumbotron my-4">
+
+  {% for q in questions %}
+  <h3 class="text-danger">Question {{ forloop.counter }}: {{ q.coding_question }}</h3>
+  <h3 class="text-danger">Expected output: {{ q.coding_answer }}</h3>
+  <h4 style="text-align: right;">[{{ q.coding_marks }} Marks]</h4>
+  {% endfor %}
+
+  <form class="form" autocomplete="off" onsubmit="return saveAns()"
+    action="/student/calculate-coding-marks" method="POST">
+    {% csrf_token %}
+    <button class="btn btn-outline-success float-left" type="submit">Submit Code</button>
+  </form>
+  <br>
+
+  <form class="form" autocomplete="off" action="/student/runcode" method="POST">
+    {% csrf_token %}
+
+    <div class="form-group row">
+      <div class="col-sm-7 mr-5 ml-3">
+        <label for="comment"><h4>Coding Area</h4></label>
+        <textarea background-color="black" class="form-control" rows="14" name="code_area"
+          style="border:1px solid grey; letter-spacing: 1px; font-family: 'Lucida Console'; font-size: 20px;"
+          onkeydown="if(event.keyCode===9) { var v=this.value,s=this.selectionStart,e=this.selectionEnd; this.value=v.substring(0, s)+'\t'+v.substring(e); this.selectionStart=this.selectionEnd=s+1; return false; }
+                                                                                                                                                                                    if (event.key === 'Enter') {
+                                                                                                                                                                                      // Enter key was pressed
+                                                                                                                                                                                      var input = event.target;
+                                                                                                                                                                                      var value = input.value;
+                                                                                                                                                                                      var start = input.selectionStart;
+                                                                                                                                                                                      var end = input.selectionEnd;
+                                                                                                                                                                                      var before = value.substring(0, start);
+                                                                                                                                                                                      var after = value.substring(end);
+                                                                                                                                                                                      var tab = '\t';
+                                                                                                                                                                                      var newline = '\n';
+                                                                                                                                                                                      var prevLineEnd = before.lastIndexOf('\n');
+                                                                                                                                                                                      var prevLine = before.substring(prevLineEnd + 1);
+                                                                                                                                                                                      if (prevLine.endsWith(':')) {
+                                                                                                                                                                                        // Add a tab space to the beginning of the next line
+                                                                                                                                                                                        newline += tab;
+                                                                                                                                                                                      }
+                                                                                                                                                                                      
+                                                                                                                                                                                      input.value = before + newline + after;
+                                                                                                                                                                                      input.selectionStart = start + newline.length;
+                                                                                                                                                                                      input.selectionEnd = start + newline.length;
+                                                                                                                                                                                      event.preventDefault();
+                                                                                                                                                                                    }
+                                                                                                                                                                                    
+                                                                                                                                                                                    /*
+                                                                                                                                                                                      if (event.key === 'Enter') 
+                                                                                                                                                                                      {
+                                                                                                                                                                                        // Enter key was pressed
+                                                                                                                                                                                        var input = event.target;
+                                                                                                                                                                                        var value = input.value;
+                                                                                                                                                                                        var start = input.selectionStart;
+                                                                                                                                                                                        var end = input.selectionEnd;
+                                                                                                                                                                                        var before = value.substring(0, start);
+                                                                                                                                                                                        var after = value.substring(end);
+                                                                                                                                                                                        var tab = '\t';
+                                                                                                                                                                                        var newline = '\n';
+                                                                                                                                                                                        var prevLineEnd = before.lastIndexOf('\n');
+                                                                                                                                                                                        var prevLine = before.substring(prevLineEnd + 1);
+                                                                                                                                                                                        if (prevLine.length >= 3) {
+                                                                                                                                                                                          // Add a tab space to the beginning of the next line
+                                                                                                                                                                                          newline += tab;
+                                                                                                                                                                                        }
+                                                                                                                                                                                        
+                                                                                                                                                                                        input.value = before + newline + after;
+                                                                                                                                                                                        input.selectionStart = start + newline.length;
+                                                                                                                                                                                        input.selectionEnd = start + newline.length;
+                                                                                                                                                                                        event.preventDefault();
+                                                                                                                                                                                      }*/
+                                                                                                                                                                                        ">{{ code }}</textarea>
+      </div>
+
+      <div class="col-sm-3">
+        <div class="row mb-4">
+          <label for="comment"><h5>Input</h5></label>
+          <textarea class="form-control" rows="7" name="input_area" style="border:1px solid grey;">{{ input }}</textarea>
+        </div>
+        <div class="row">
+          <label for="comment"><h5>Output</h5></label>
+          <textarea class="form-control" rows="7" name="output_area" style="border:1px solid grey;"
+            disabled>{{ output }}</textarea>
+        </div>
+      </div>
+    </div>
+    <div class="form-group row">
+      <div class="col-sm-7 ml-3">
+        <button class="btn btn-outline-success float-right" type="submit">Run Your Code</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<br><br><br><br><br><br>
+{% endblock content %}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<style>
+  body{
+    background-image: url("static/image/bg1.jpg");
+    background-size:100%;
+  }
+  p {
+    font-size: 30px;
+    color:rgb(115, 112, 170)
+  }
+  h3{
+    color:white;
+  }
+</style>
+
+</head>
+
+<body>
+
+  {% include "exam/navbar.html" %}
+  <br><br>
+
+  <center><br><br>
+    <h3 >Please fillup the form in order to contact us</h3>
+<br><br><table>
+    <form method="POST" autocomplete="off">
+      {% csrf_token %}
+      <div class="form-group">
+        <p><tr>
+        <h3>{{ form.as_p }}</h3></tr>
+        </p>
+        <br>
+        <input type="submit" value="Submit" class='btn btn-primary' style="border-radius: 0%;">
+      </div>
+    </form>
+    </table>
+  </center>
+
+  {% include "exam/footer.html" %}
+</body>
+
+</html>

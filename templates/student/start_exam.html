@@ -1,0 +1,337 @@
+{% block content %}
+{% load static %}
+
+<head>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+
+    <style>
+        h2,.Timer
+        {
+            font-size:large;
+            margin:4 auto;
+            color: rgb(7, 26, 43);  
+        }
+        #videoCaptureBox {
+            background-color: #3e4043;
+            margin:0 auto;
+            position: relative;
+            width:95%;
+            left:0px;
+
+ 
+        }
+        .jumbotron {
+            margin-top: 0 auto;
+            position: relative;
+            width:80%;
+            top:50px;
+            left:140px;
+            background-color: #bfc1c5;
+            padding: 50px;
+        }
+
+
+        .form {
+            margin: 0 auto;
+            background-color: #bfc1c5;
+            overflow: auto;
+            overflow-y: scroll;
+            width:1100px;
+            height:500px;
+
+        }
+        
+
+        .question {
+            color: #dc3545;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            margin-left:30px;
+        }
+
+        .marks {
+            text-align: right;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .options {
+            margin-left: 20px;
+        }
+
+        .form-check-label {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .btn-submit {
+            border-radius: 0%;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+
+</head>
+
+<script type="text/javascript">
+    function captureVideo () {
+        var video = document.createElement('video');
+        video.autoplay = true;
+
+        video.style.width = '30%';
+        video.style.height = '250px';
+        video.style.backgroundColor='black';
+        video.style.border = '2px solid #dc3545';
+        video.style.display = 'block';
+        video.style.margin = '0 auto';
+
+        video.style.left = '150px';
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+
+                var videoCaptureBox = document.getElementById('videoCaptureBox');
+                videoCaptureBox.innerHTML = '';
+                videoCaptureBox.appendChild(video);
+
+                var imageCaptured = false;
+
+                var errorCount = 0;
+
+                setTimeout(function () {
+                    if (!imageCaptured)
+                    {
+                        captureImageFromVideo(video);
+                        imageCaptured = true;
+                    }
+                }, 1000);
+
+                setInterval(function () {
+                    if (imageCaptured)
+                    {
+                        compareImages();
+                    }
+                }, 2000); 
+
+                function compareImages () {
+                    var savedImageDataURL = localStorage.getItem('capturedImage');
+
+                    if (savedImageDataURL)
+                    {
+                        var savedImage = document.createElement('img');
+                        savedImage.src = savedImageDataURL;
+
+                        var videoCanvas = document.createElement('canvas');
+                        videoCanvas.width = video.videoWidth;
+                        videoCanvas.height = video.videoHeight;
+
+                        var savedCanvas = document.createElement('canvas');
+                        savedCanvas.width = savedImage.width;
+                        savedCanvas.height = savedImage.height;
+
+                        var videoContext = videoCanvas.getContext('2d');
+                        var savedContext = savedCanvas.getContext('2d');
+
+                        videoContext.drawImage(video, 0, 0);
+                        savedContext.drawImage(savedImage, 0, 0);
+
+                        var videoData = videoContext.getImageData(0, 0, videoCanvas.width, videoCanvas.height).data;
+                        var savedData = savedContext.getImageData(0, 0, savedCanvas.width, savedCanvas.height).data;
+
+                        var pixelsDifferent = 0;
+
+                        for (var i = 0; i < videoData.length; i += 4)
+                        {
+                            if (
+                                videoData[i] !== savedData[i] ||
+                                videoData[i + 1] !== savedData[i + 1] ||
+                                videoData[i + 2] !== savedData[i + 2] ||
+                                videoData[i + 3] !== savedData[i + 3]
+                            )
+                            {
+                                pixelsDifferent++;
+                            }
+                        }
+
+                        var threshold = 100;
+
+                        if (pixelsDifferent <= threshold)
+                        {
+                            console.log('Anonymous object detected.');
+                            errorCount++;
+                            if (errorCount >= 5)
+                            {
+                                window.location.href = 'home.html';
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(function (error) {
+                console.log('Error accessing camera:', error);
+            });
+
+        function captureImageFromVideo (videoElement) {
+            var canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+
+            var context = canvas.getContext('2d');
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+            var imageDataURL = canvas.toDataURL('image/png');
+
+            saveImage(imageDataURL);
+
+            
+        }
+
+        function saveImage (imageDataURL)
+        {
+            localStorage.setItem('capturedImage', imageDataURL);
+        }
+    }
+
+
+    window.addEventListener('load', captureVideo);
+
+
+
+    var examInProgress = true;
+
+    window.addEventListener('beforeunload', function (event) {
+        if (examInProgress)
+        {
+            var confirmationMessage = 'Are you sure you want to leave the exam?';
+
+            (event || window.event).returnValue = confirmationMessage;
+            return confirmationMessage;
+        }
+    });
+
+    document.addEventListener('visibilitychange', function (event) {
+        if (examInProgress)
+        {
+             document.addEventListener('visibilitychange', function (event) {
+                if (examInProgress)
+                {
+                    if (document.visibilityState === 'hidden')
+                    {
+                        alert('You are not allowed to switch tabs during the exam.');
+                        window.focus();
+
+                        window.location.href = '/';
+                    }
+                }
+            });
+
+        }
+    });
+    function countdown(elem, duration) {
+  var totalSeconds = duration * 60;
+  var element = document.getElementById(elem);
+
+  var timer = setInterval(function () {
+    if (totalSeconds < 0) {
+      clearInterval(timer);
+
+      alert(
+        "Dear Student, your time is up! Please click the 'OK' button to submit your answers."
+      );
+      window.location.href = "{% url 'calculate-marks' %}";
+    } else {
+      var remainingMinutes = Math.floor(totalSeconds / 60);
+      var remainingSeconds = totalSeconds % 60;
+      element.innerHTML =
+        remainingMinutes + ":" + remainingSeconds.toString().padStart(2, "0");
+
+      if (remainingMinutes === 0 && remainingSeconds <= 10) {
+        element.style.color = "red";
+      }
+
+      totalSeconds--;
+    }
+  }, 1000);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  var duration = {{ course.duration }}; 
+  countdown("timer", duration);
+});
+
+</script>
+<div id="videoCaptureBox"></div>
+  <h2 style="text-align:center;" >{{ course.course_name }}</h2>
+  <div id="timer" style="text-align: center;">{{ course.duration }}</div>
+<div class="jumbotron my-4">
+    <form class="form" autocomplete="off" onsubmit="examInProgress = false; return saveAns()" action="/student/calculate-marks"
+        method="POST">
+        {% csrf_token %}
+        
+
+        {% for q in questions %}
+        <h3 class="text-danger">{{ forloop.counter }}. {{ q.question }}</h3>
+        <h4 style="text-align: right;">[{{ q.marks }} Marks]</h4>
+
+        <input type="hidden" name="csrfmiddlewaretoken"
+            value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
+
+        <div class="form-check mx-4">
+            <input class="form-check-input" type="radio" name="{{ forloop.counter }}" id="{{ q.option1 }}"
+                value="Option1">
+            <label class="form-check-label" for="option1">{{ q.option1 }}</label>
+        </div>
+
+        <div class="form-check mx-4">
+            <input class="form-check-input" type="radio" name="{{ forloop.counter }}" id="{{ q.option2 }}"
+                value="Option2">
+            <label class="form-check-label" for="option2">{{ q.option2 }}</label>
+        </div>
+
+        <div class="form-check mx-4">
+            <input class="form-check-input" type="radio" name="{{ forloop.counter }}" id="{{ q.option3 }}"
+                value="Option3">
+            <label class="form-check-label" for="option3">{{ q.option3 }}</label>
+        </div>
+
+        <div class="form-check mx-4">
+            <input class="form-check-input" type="radio" name="{{ forloop.counter }}" id="{{ q.option4 }}"
+                value="Option4">
+            <label class="form-check-label" for="option4">{{ q.option4 }}</label>
+        </div>
+        {% endfor %}
+
+        <input class="btn btn-success btn-lg" style="border-radius: 5%;" type="submit" value="Submit Answers">
+    </form>
+</div>
+
+<script>
+    function saveAns(){  
+
+        var ele = document.getElementsByTagName('input'); 
+        for(i = 0; i < ele.length; i++) { 
+            if(ele[i].type="radio") { 
+                if(ele[i].checked){        
+                  setCookie(ele[i].name,ele[i].value,3)
+                }
+            } 
+        } 
+          
+    }
+    function setCookie (cname, cvalue, exdays)
+    {
+        var d = new Date();
+        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+        var expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+</script>
+
+{% endblock content %}
